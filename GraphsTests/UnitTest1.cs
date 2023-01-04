@@ -179,7 +179,7 @@ namespace GraphsTests
         }
 
         [Test]
-        public void FloydWashallAllPairDistances()
+        public void FloydWarshallAllPairShortestDistances()
         {
             const double i = double.PositiveInfinity;
             double[,] expected = { { 0, 1, 2, 3, 5 },
@@ -195,9 +195,41 @@ namespace GraphsTests
         }
 
         [Test]
-        public void FloydWashallAllPairPaths()
+        public void FloydWarshallAllPairShortestDistancesNegativeCycles()
         {
-            // TODO
+            const double p = double.PositiveInfinity;
+            const double n = double.NegativeInfinity;
+            double[,] expected = { { 0, n, n, n, n, n },
+                                   { p, n, n, n, n, n },
+                                   { p, n, n, n, n, n },
+                                   { p, n, n, n, n, n },
+                                   { p, p, p, p, 0, p },
+                                   { p, p, p, p, p, 0 } };
+
+            Graph<string> graph = CreateGraphWithNegativeCycles();
+            double[,] distances = graph.GetAllPairShortestDistances();
+
+            Assert.That(distances, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void FloydWashallAllPairShortestPaths()
+        {
+            Graph<string> graph = CreateGraph();
+
+            Vertex<string>[][] allPaths = graph.GetAllPairShortestPaths(out _);
+
+            string[] expected = { "A", "B", "A", "B", "C", "A", "B", "D", "A", "B", "C", "E", "B", "C", "B", "D", "B", "C", "E", "C", "D", "C", "E", "D", "E", "C", "D", "E", "E", "C", "E", "C", "D" };
+            int i = 0;
+
+            foreach (Vertex<string>[] path in allPaths)
+            {
+                foreach (Vertex<string> vertex in path)
+                {
+                    Assert.That(vertex.Value, Is.EqualTo(expected[i]));
+                    i++;
+                }
+            }
         }
 
         [Test]
