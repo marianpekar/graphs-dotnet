@@ -392,8 +392,6 @@ namespace Graphs
             bool[] visited = new bool[VertexCount];
             bool[] isArticulationPoint = new bool[VertexCount];
 
-            List<(Vertex<T>, Vertex<T>)> bridges = new();
-
             for (int i = 0; i < VertexCount; i++)
             {
                 if (!visited[i])
