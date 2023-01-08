@@ -444,5 +444,102 @@ namespace Graphs
                 }
             }
         }
+
+        public Vertex<T>[][] GetStronglyConnectedComponents()
+        {
+            int[] sccs = Tarjan();
+
+            Dictionary<int, List<Vertex<T>>> vertGroupedByLowlinks = GetVerticesGroupedByLowlinks(sccs);
+
+            Vertex<T>[][] groups = new Vertex<T>[vertGroupedByLowlinks.Count][];
+            int j = 0;
+            foreach (var group in vertGroupedByLowlinks)
+            {
+                groups[j] = vertGroupedByLowlinks[j].ToArray();
+                j++;
+            }
+
+            return groups;
+        }
+
+        private Dictionary<int, List<Vertex<T>>> GetVerticesGroupedByLowlinks(int[] sccs)
+        {
+            Dictionary<int, List<Vertex<T>>> groupedByLowLinks = new();
+            for (int i = 0; i < sccs.Length; i++)
+            {
+                int scc = sccs[i];
+
+                if (!groupedByLowLinks.ContainsKey(scc))
+                {
+                    groupedByLowLinks.Add(scc, new List<Vertex<T>>());
+                    groupedByLowLinks[scc].Add(GetVertex(i));
+                }
+                else
+                {
+                    groupedByLowLinks[scc].Add(GetVertex(i));
+                }
+            }
+
+            return groupedByLowLinks;
+        }
+
+        private const int kUnvisited = -1;
+        private int[] Tarjan()
+        {
+            int id = 0;
+            int sccsCount = 0;
+
+            int[] ids = new int[VertexCount];
+            Array.Fill(ids, kUnvisited);
+
+            int[] low = new int[VertexCount];
+            int[] sccs = new int[VertexCount];
+            bool[] visited = new bool[VertexCount];
+
+            Stack<int> stack = new();
+
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (ids[i] == kUnvisited)
+                {
+                    DepthFirstSearchForConnectedComponents(i, visited, ids, id, low, stack, sccs, ref sccsCount);
+                }
+            }
+
+            return sccs;
+        }
+
+        private void DepthFirstSearchForConnectedComponents(int at, bool[] visited, int[] ids, int id, int[] low, Stack<int> stack, int[] sccs, ref int sccsCount)
+        {
+            ids[at] = low[at] = id++;
+            stack.Push(at);
+            visited[at] = true;
+
+            foreach (var edge in GetEdges(at))
+            {
+                if (ids[edge.To.Id] == kUnvisited)
+                {
+                    DepthFirstSearchForConnectedComponents(edge.To.Id, visited, ids, id, low, stack, sccs, ref sccsCount);
+                }
+
+                if (visited[edge.To.Id])
+                {
+                    low[at] = Math.Min(low[at], low[edge.To.Id]);
+                }
+            }
+
+            if (ids[at] == low[at])
+            {
+                for (int vertex = stack.Pop(); ; vertex = stack.Pop())
+                {
+                    visited[vertex] = false;
+                    sccs[vertex] = sccsCount;
+
+                    if (vertex == at)
+                        break;
+                }
+                sccsCount++;
+            }
+        }
     }
 }

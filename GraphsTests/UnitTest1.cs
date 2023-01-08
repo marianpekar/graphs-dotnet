@@ -114,6 +114,46 @@ namespace GraphsTests
             return graph;
         }
 
+        /*
+            A -> [B (1)]
+            B -> [C (1)]
+            C -> [A (1)]
+            D -> [E (1)][H (1)]
+            E -> [F (1)]
+            F -> [A (1)][G (1)]
+            G -> [A (1)][C (1)][E (1)]
+            H -> [F (1)][D (1)]         
+        */
+        private Graph<string> CreateGraphWithStronglyConnectedComponents()
+        {
+            Graph<string> graph = new();
+
+            int a = graph.AddVertex("A");
+            int b = graph.AddVertex("B");
+            int c = graph.AddVertex("C");
+            int d = graph.AddVertex("D");
+            int e = graph.AddVertex("E");
+            int f = graph.AddVertex("F");
+            int g = graph.AddVertex("G");
+            int h = graph.AddVertex("H");
+
+            graph.AddEdge(a, b, 1);
+            graph.AddEdge(b, c, 1);
+            graph.AddEdge(c, a, 1);
+            graph.AddEdge(e, f, 1);
+            graph.AddEdge(d, e, 1);
+            graph.AddEdge(d, h, 1);
+            graph.AddEdge(f, a, 1);
+            graph.AddEdge(f, g, 1);
+            graph.AddEdge(g, a, 1);
+            graph.AddEdge(g, c, 1);
+            graph.AddEdge(g, e, 1);
+            graph.AddEdge(h, f, 1);
+            graph.AddEdge(h, d, 1);
+
+            return graph;
+        }
+
         [Test]
         public void DijkstraDistance()
         {
@@ -261,6 +301,26 @@ namespace GraphsTests
                 Assert.That(articulationPoints[1].Value, Is.EqualTo("E"));
                 Assert.That(articulationPoints[2].Value, Is.EqualTo("F"));
                 Assert.That(articulationPoints[3].Value, Is.EqualTo("I"));
+            });
+        }
+
+        [Test]
+        public void TarjanStrongyConnectedComponents()
+        {
+            Graph<string> graph = CreateGraphWithStronglyConnectedComponents();
+
+            Vertex<string>[][] sccs = graph.GetStronglyConnectedComponents();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(sccs[0][0].Value, Is.EqualTo("A"));
+                Assert.That(sccs[0][1].Value, Is.EqualTo("B"));
+                Assert.That(sccs[0][2].Value, Is.EqualTo("C"));
+                Assert.That(sccs[1][0].Value, Is.EqualTo("E"));
+                Assert.That(sccs[1][1].Value, Is.EqualTo("F"));
+                Assert.That(sccs[1][2].Value, Is.EqualTo("G"));
+                Assert.That(sccs[2][0].Value, Is.EqualTo("D"));
+                Assert.That(sccs[2][1].Value, Is.EqualTo("H"));
             });
         }
     }
