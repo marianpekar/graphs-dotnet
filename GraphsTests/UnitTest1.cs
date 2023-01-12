@@ -154,6 +154,59 @@ namespace GraphsTests
             return graph;
         }
 
+        /*
+            A -> [B (1)]
+            B -> [C (1)][E (1)][D (1)]
+            C -> [B (1)]
+            D ->
+            E -> [B (1)]
+        */
+        private Graph<string> CreateGraphWithEulerianPath()
+        {
+            Graph<string> graph = new();
+
+            int a = graph.AddVertex("A");
+            int b = graph.AddVertex("B");
+            int c = graph.AddVertex("C");
+            int d = graph.AddVertex("D");
+            int e = graph.AddVertex("E");
+
+            graph.AddEdge(a, b, 1);
+            graph.AddEdge(b, c, 1);
+            graph.AddEdge(b, e, 1);
+            graph.AddEdge(b, d, 1);
+            graph.AddEdge(c, b, 1);
+            graph.AddEdge(e, b, 1);
+
+            return graph;
+        }
+
+        /*
+            A -> [B (1)]
+            B -> [E (1)][D (1)]
+            C -> [B (1)]
+            D ->
+            E -> [B (1)] 
+        */
+        private Graph<string> CreateGraphWithoutEulerianPath()
+        {
+            Graph<string> graph = new();
+
+            int a = graph.AddVertex("A");
+            int b = graph.AddVertex("B");
+            int c = graph.AddVertex("C");
+            int d = graph.AddVertex("D");
+            int e = graph.AddVertex("E");
+
+            graph.AddEdge(a, b, 1);
+            graph.AddEdge(b, e, 1);
+            graph.AddEdge(b, d, 1);
+            graph.AddEdge(c, b, 1);
+            graph.AddEdge(e, b, 1);
+
+            return graph;
+        }
+
         [Test]
         public void DijkstraDistance()
         {
@@ -322,6 +375,35 @@ namespace GraphsTests
                 Assert.That(sccs[2][0].Value, Is.EqualTo("D"));
                 Assert.That(sccs[2][1].Value, Is.EqualTo("H"));
             });
+        }
+
+        [Test]
+        public void FindEulerianPath()
+        {
+            Graph<string> graph = CreateGraphWithEulerianPath();
+
+            Vertex<string>[] eulerianPath = graph.FindEulerianPath();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(eulerianPath[0].Value, Is.EqualTo("A"));
+                Assert.That(eulerianPath[1].Value, Is.EqualTo("B"));
+                Assert.That(eulerianPath[2].Value, Is.EqualTo("E"));
+                Assert.That(eulerianPath[3].Value, Is.EqualTo("B"));
+                Assert.That(eulerianPath[4].Value, Is.EqualTo("C"));
+                Assert.That(eulerianPath[5].Value, Is.EqualTo("B"));
+                Assert.That(eulerianPath[6].Value, Is.EqualTo("D"));
+            });
+        }
+
+        [Test]
+        public void FindEulerianPathGraphDoesNotHaveOne()
+        {
+            Graph<string> graph = CreateGraphWithoutEulerianPath();
+
+            Vertex<string>[] eulerianPath = graph.FindEulerianPath();
+
+            Assert.That(eulerianPath, Is.Null);
         }
     }
 }

@@ -541,5 +541,99 @@ namespace Graphs
                 sccsCount++;
             }
         }
+
+        public Vertex<T>[] FindEulerianPath()
+        {
+            (int[] inEdges, int[] outEdges) = CountInAndOutEdges(out int edgeCount);
+
+            if (!HasEulerianPath(inEdges, outEdges, edgeCount))
+                return null;
+
+            int startVertex = FindStartVertex(inEdges, outEdges);
+            List<Vertex<T>> path = new List<Vertex<T>>();
+            DepthFirstSearchForEulerianPath(startVertex, outEdges, path);
+
+            if (path.Count != edgeCount + 1)
+                return null;
+
+            path.Reverse();
+
+            return path.ToArray();
+        }
+
+        private (int[], int[]) CountInAndOutEdges(out int total)
+        {
+            int[] inEdges = new int[VertexCount];
+            int[] outEdges = new int[VertexCount];
+
+            total = 0;
+
+            for (int from = 0; from < VertexCount; from++)
+            {
+                foreach (Edge<T> edge in GetEdges(from))
+                {
+                    inEdges[edge.To.Id]++;
+                    outEdges[from]++;
+                    total++;
+                }
+            }
+
+            return (inEdges, outEdges);
+        }
+
+        private bool HasEulerianPath(int[] inEdges, int[] outEdges, int edgeCount)
+        {
+            if (edgeCount == 0)
+                return false;
+
+            int startNodes = 0;
+            int endNodes = 0;
+
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (outEdges[i] - inEdges[i] > 1 || inEdges[i] - outEdges[i] > 1)
+                {
+                    return false;
+                }
+                else if (outEdges[i] - inEdges[i] == 1)
+                {
+                    startNodes++;
+                }
+                else if (inEdges[i] - outEdges[i] == 1)
+                {
+                    endNodes++;
+                }
+            }
+
+            return (endNodes == 0 && startNodes == 0) || (endNodes == 1 && startNodes == 1);
+        }
+
+        private int FindStartVertex(int[] inEdges, int[] outEdges)
+        {
+            int start = 0;
+
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (outEdges[i] - inEdges[i] == 1)
+                    return i;
+
+                if (outEdges[i] > 0)
+                {
+                    start = i;
+                }
+            }
+
+            return start;
+        }
+
+        private void DepthFirstSearchForEulerianPath(int at, int[] outEdges, List<Vertex<T>> path)
+        {
+            while (outEdges[at] != 0)
+            {
+                int next = GetEdges(at)[--outEdges[at]].To.Id;
+                DepthFirstSearchForEulerianPath(next, outEdges, path);
+            }
+            path.Add(GetVertex(at));
+        }
     }
 }
