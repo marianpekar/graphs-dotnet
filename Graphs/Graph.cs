@@ -1,11 +1,22 @@
-﻿using System.Text;
+﻿using Graphs.Solvers;
+using System.Collections;
+using System.Text;
 
 namespace Graphs
 {
-    public class Graph<T>
+    public class Graph<T> : IEnumerable<KeyValuePair<Vertex<T>, List<Edge<T>>>>
     {
         private Dictionary<Vertex<T>, List<Edge<T>>> graph = new();
         public int VertexCount { get => graph.Count; }
+
+        public List<Edge<T>> this[Vertex<T> vertex]
+        {
+            get => graph[vertex];
+            set => graph[vertex] = value;
+        }
+
+        public IEnumerator<KeyValuePair<Vertex<T>, List<Edge<T>>>> GetEnumerator() => graph.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public void AddEdge(int from, int to, double cost)
         {
@@ -31,15 +42,36 @@ namespace Graphs
             return VertexCount - 1;
         }
 
-        public Vertex<T> GetVertex(int id)
-        {
-            return graph.ElementAt(id).Key;
-        }
+        public KeyValuePair<Vertex<T>, List<Edge<T>>> ElementAt(int i) => graph.ElementAt(i);
+        public Vertex<T> GetVertex(int id) => graph.ElementAt(id).Key;
+        public Edge<T>[] GetEdges(int id) => graph.ElementAt(id).Value.ToArray();
 
-        public Edge<T>[] GetEdges(int id)
-        {
-            return graph.ElementAt(id).Value.ToArray();
-        }
+        public Vertex<T>[] GetShortestPath(int from, int to, out double distance) 
+            => DijkstraSolver<T>.GetShortestPath(this, from, to, out distance);
+
+        public double[] GetShortestDistances(int from) 
+            => BellmanFordSolver<T>.GetShortestDistances(this, from);
+
+        public void Topsort() 
+            => graph = TopsortSolver<T>.Topsort(this);
+
+        public double[,] GetAllPairShortestDistances()
+            => FloydWarshallSolver<T>.GetAllPairShortestDistances(this);
+
+        public Vertex<T>[][]? GetAllPairShortestPaths(out double[,] distances)
+            => FloydWarshallSolver<T>.GetAllPairShortestPaths(this, out distances);
+
+        public (Vertex<T>, Vertex<T>)[] FindBridges()
+            => FindBridgesSolver<T>.FindBridges(this);
+
+        public Vertex<T>[] FindArticulationPoints()
+            => FindArticulationPointsSolver<T>.FindArticulationPoints(this);
+
+        public Vertex<T>[][] GetStronglyConnectedComponents()
+            => TarjanSolver<T>.GetStronglyConnectedComponents(this);
+
+        public Vertex<T>[]? FindEulerianPath()
+            => EulerianPathSolver<T>.FindEulerianPath(this);
 
         public override string ToString()
         {
@@ -54,586 +86,6 @@ namespace Graphs
                 stringBuilder.AppendLine();
             }
             return stringBuilder.ToString();
-        }
-
-        public Vertex<T>[] GetShortestPath(int from, int to, out double distance)
-        {
-            Vertex<T> fromVertex = GetVertex(from);
-            Vertex<T> toVertex = GetVertex(to);
-
-            distance = Dijkstra(fromVertex, toVertex, out Vertex<T>[] prev);
-
-            List<Vertex<T>> path = new();
-            for (Vertex<T> at = toVertex; at != null; at = prev[at.Id])
-            {
-                path.Add(at);
-            }
-            path.Reverse();
-
-            return path.ToArray();
-        }
-
-        private double Dijkstra(Vertex<T> start, Vertex<T> end, out Vertex<T>[] prev)
-        {
-            double[] dist = new double[VertexCount];
-            Array.Fill(dist, double.PositiveInfinity);
-            dist[start.Id] = 0;
-
-            PriorityQueue<Vertex<T>, double> priorityQueue = new();
-            priorityQueue.Enqueue(start, 0);
-
-            bool[] visited = new bool[VertexCount];
-            prev = new Vertex<T>[VertexCount];
-
-            while (priorityQueue.Count > 0)
-            {
-                priorityQueue.TryDequeue(out Vertex<T> current, out double currentCost);
-                visited[current.Id] = true;
-
-                if (dist[current.Id] < currentCost)
-                    continue;
-
-                List<Edge<T>> edges = graph[current];
-                foreach (Edge<T> edge in edges)
-                {
-                    if (visited[edge.To.Id])
-                        continue;
-
-                    double newDist = dist[current.Id] + edge.Cost;
-                    if (newDist < dist[edge.To.Id])
-                    {
-                        prev[edge.To.Id] = current;
-                        dist[edge.To.Id] = newDist;
-                        priorityQueue.Enqueue(edge.To, newDist);
-                    }
-                }
-                if (current.Id == end.Id)
-                    return dist[end.Id];
-            }
-
-            return double.PositiveInfinity;
-        }
-
-        public double[] GetShortestDistances(int from)
-        {
-            Vertex<T> fromVertex = GetVertex(from);
-            return BellmanFord(fromVertex);
-        }
-
-        private double[] BellmanFord(Vertex<T> start)
-        {
-            double[] dist = new double[VertexCount];
-            Array.Fill(dist, double.PositiveInfinity);
-            dist[start.Id] = 0;
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                var current = graph.ElementAt(i);
-
-                Vertex<T> vertex = current.Key;
-                List<Edge<T>> edges = current.Value;
-
-                foreach (Edge<T> edge in edges)
-                {
-                    if (dist[vertex.Id] + edge.Cost < dist[edge.To.Id])
-                    {
-                        dist[edge.To.Id] = dist[vertex.Id] + edge.Cost;
-                    }
-                }
-            }
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                var current = graph.ElementAt(i);
-
-                Vertex<T> vertex = current.Key;
-                List<Edge<T>> edges = current.Value;
-
-                foreach (Edge<T> edge in edges)
-                {
-                    if (dist[vertex.Id] + edge.Cost < dist[edge.To.Id])
-                    {
-                        dist[edge.To.Id] = double.NegativeInfinity;
-                    }
-                }
-            }
-
-            return dist;
-        }
-
-
-        public void Topsort()
-        {
-            int[] ordering = new int[VertexCount];
-            bool[] visited = new bool[VertexCount];
-
-            int i = VertexCount - 1;
-            for (int at = 0; at < VertexCount; at++)
-            {
-                if (!visited[at])
-                {
-                    i = DepthFirstSearchForTopsort(i, visited, ordering, at);
-                }
-            }
-
-            Dictionary<Vertex<T>, List<Edge<T>>> sortedGraph = new();
-            foreach (int id in ordering)
-            {
-                var fromCurrentGraph = graph.ElementAt(id);
-                sortedGraph.Add(fromCurrentGraph.Key, fromCurrentGraph.Value);
-            }
-
-            graph = sortedGraph;
-        }
-
-        private int DepthFirstSearchForTopsort(int i, bool[] visited, int[] ordering, int at)
-        {
-            visited[at] = true;
-
-            Vertex<T> current = GetVertex(at);
-            List<Edge<T>> edges = graph[current];
-
-            foreach (Edge<T> edge in edges)
-            {
-                if (!visited[edge.To.Id])
-                {
-                    i = DepthFirstSearchForTopsort(i, visited, ordering, edge.To.Id);
-                }
-            }
-
-            ordering[i] = at;
-            return i - 1;
-        }
-
-        public double[,] GetAllPairShortestDistances()
-        {
-            return FloydWarshall(out _);
-        }
-
-        public Vertex<T>[][] GetAllPairShortestPaths(out double[,] distances)
-        {
-            distances = FloydWarshall(out int[,] next);
-
-            List<Vertex<T>[]> allPairShortestPaths = new();
-            for (int i = 0; i < VertexCount; i++)
-            {
-                for (int j = 0; j < VertexCount; j++)
-                {
-                    if (i == j)
-                        continue;
-
-                    Vertex<T>[] shortestPaths = ReconstructShortestPathFrom(i, j, next, distances);
-
-                    if (shortestPaths == null || shortestPaths.Length == 0)
-                        continue;
-
-                    allPairShortestPaths.Add(shortestPaths);
-                }
-            }
-
-            return allPairShortestPaths.ToArray();
-        }
-
-        public Vertex<T>[] ReconstructShortestPathFrom(int start, int end, int[,] next, double[,] distances)
-        {
-            List<Vertex<T>> path = new List<Vertex<T>>();
-
-            if (distances[start, end] == double.PositiveInfinity)
-                return path.ToArray();
-
-            for (int at = start; at != end; at = next[at, end])
-            {
-                if (at == -1)
-                    return null;
-
-                path.Add(GetVertex(at));
-            }
-
-            if (next[start, end] == -1)
-                return null;
-
-            path.Add(GetVertex(end));
-
-            return path.ToArray();
-        }
-
-        private double[,] FloydWarshall(out int[,] next)
-        {
-            double[,] adjacencyMatrix = CreateAdjacencyMatrix();
-            double[,] distances = (double[,])adjacencyMatrix.Clone();
-            next = new int[VertexCount, VertexCount];
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                for (int j = 0; j < VertexCount; j++)
-                {
-                    if (adjacencyMatrix[i, j] != double.PositiveInfinity)
-                    {
-                        next[i, j] = j;
-                    }
-                }
-            }
-
-            for (int k = 0; k < VertexCount; k++)
-            {
-                for (int i = 0; i < VertexCount; i++)
-                {
-                    for (int j = 0; j < VertexCount; j++)
-                    {
-                        if (distances[i, k] + distances[k, j] < distances[i, j])
-                        {
-                            distances[i, j] = distances[i, k] + distances[k, j];
-                            next[i, j] = next[i, k];
-                        }
-                    }
-                }
-            }
-
-            for (int k = 0; k < VertexCount; k++)
-            {
-                for (int i = 0; i < VertexCount; i++)
-                {
-                    for (int j = 0; j < VertexCount; j++)
-                    {
-                        if (distances[i, k] != double.PositiveInfinity &&
-                            distances[k, j] != double.PositiveInfinity &&
-                            distances[k, k] < 0)
-                        {
-                            distances[i, j] = double.NegativeInfinity;
-                            next[i, k] = -1;
-                        }
-
-                    }
-                }
-            }
-
-            return distances;
-        }
-
-        private double[,] CreateAdjacencyMatrix()
-        {
-            double[,] adjacencyMatrix = new double[VertexCount, VertexCount];
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                for (int j = 0; j < VertexCount; j++)
-                {
-                    adjacencyMatrix[i, j] = i == j ? 0 : double.PositiveInfinity;
-                }
-            }
-
-            foreach (var item in graph)
-            {
-                Vertex<T> vertex = item.Key;
-                List<Edge<T>> edges = item.Value;
-
-                foreach (Edge<T> edge in edges)
-                {
-                    adjacencyMatrix[vertex.Id, edge.To.Id] = edge.Cost;
-                }
-            }
-
-            return adjacencyMatrix;
-        }
-
-        public (Vertex<T>, Vertex<T>)[] FindBridges()
-        {
-            int id = 0;
-            int[] low = new int[VertexCount];
-            int[] ids = new int[VertexCount];
-            bool[] visited = new bool[VertexCount];
-
-            List<(Vertex<T>, Vertex<T>)> bridges = new();
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                if (!visited[i])
-                {
-                    DepthFirstSearchForBridges(i, -1, visited, low, ids, id, bridges);
-                }
-            }
-
-            return bridges.ToArray();
-        }
-
-        private void DepthFirstSearchForBridges(int at, int parent, bool[] visited, int[] low, int[] ids, int id, List<(Vertex<T>, Vertex<T>)> bridges)
-        {
-            visited[at] = true;
-            low[at] = ids[at] = ++id;
-
-            foreach (var edge in GetEdges(at))
-            {
-                if (edge.To.Id == parent)
-                    continue;
-
-                if (!visited[edge.To.Id])
-                {
-                    DepthFirstSearchForBridges(edge.To.Id, at, visited, low, ids, id, bridges);
-
-                    low[at] = Math.Min(low[at], low[edge.To.Id]);
-                    if (ids[at] < low[edge.To.Id])
-                    {
-                        bridges.Add((GetVertex(at), GetVertex(edge.To.Id)));
-                    }
-                }
-                else
-                {
-                    low[at] = Math.Min(low[at], ids[edge.To.Id]);
-                }
-            }
-        }
-
-        public Vertex<T>[] FindArticulationPoints()
-        {
-            int id = 0;
-            int rootNodeOutcomingEdgeCount = 0;
-            int[] low = new int[VertexCount];
-            int[] ids = new int[VertexCount];
-            bool[] visited = new bool[VertexCount];
-            bool[] isArticulationPoint = new bool[VertexCount];
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                if (!visited[i])
-                {
-                    rootNodeOutcomingEdgeCount = 0;
-                    DepthFirstSearchForArticulationPoints(i, i, -1, ref rootNodeOutcomingEdgeCount, visited, low, ids, id, isArticulationPoint);
-                    isArticulationPoint[i] = rootNodeOutcomingEdgeCount > 1;
-                }
-            }
-
-            List<Vertex<T>> articulationPoints = new();
-            for (int i = 0; i < isArticulationPoint.Length; i++)
-            {
-                if (!isArticulationPoint[i])
-                    continue;
-
-                articulationPoints.Add(GetVertex(i));
-            }
-
-            return articulationPoints.ToArray();
-        }
-
-        private void DepthFirstSearchForArticulationPoints(int root, int at, int parent, ref int rootNodeOutcomingEdgeCount, bool[] visited, int[] low, int[] ids, int id, bool[] isArticulationPoint)
-        {
-            if (parent == root)
-            {
-                rootNodeOutcomingEdgeCount++;
-            }
-
-            visited[at] = true;
-            low[at] = ids[at] = id++;
-
-            foreach (var edge in GetEdges(at))
-            {
-                if (edge.To.Id == parent)
-                    continue;
-
-                if (!visited[edge.To.Id])
-                {
-                    DepthFirstSearchForArticulationPoints(root, edge.To.Id, at, ref rootNodeOutcomingEdgeCount,
-                        visited, low, ids, id, isArticulationPoint);
-                    if (ids[at] <= low[edge.To.Id])
-                    {
-                        isArticulationPoint[at] = true;
-                    }
-                }
-                else
-                {
-                    low[at] = Math.Min(low[at], ids[edge.To.Id]);
-                }
-            }
-        }
-
-        public Vertex<T>[][] GetStronglyConnectedComponents()
-        {
-            int[] sccs = Tarjan();
-
-            Dictionary<int, List<Vertex<T>>> vertGroupedByLowlinks = GetVerticesGroupedByLowlinks(sccs);
-
-            Vertex<T>[][] groups = new Vertex<T>[vertGroupedByLowlinks.Count][];
-            int j = 0;
-            foreach (var group in vertGroupedByLowlinks)
-            {
-                groups[j] = vertGroupedByLowlinks[j].ToArray();
-                j++;
-            }
-
-            return groups;
-        }
-
-        private Dictionary<int, List<Vertex<T>>> GetVerticesGroupedByLowlinks(int[] sccs)
-        {
-            Dictionary<int, List<Vertex<T>>> groupedByLowLinks = new();
-            for (int i = 0; i < sccs.Length; i++)
-            {
-                int scc = sccs[i];
-
-                if (!groupedByLowLinks.ContainsKey(scc))
-                {
-                    groupedByLowLinks.Add(scc, new List<Vertex<T>>());
-                    groupedByLowLinks[scc].Add(GetVertex(i));
-                }
-                else
-                {
-                    groupedByLowLinks[scc].Add(GetVertex(i));
-                }
-            }
-
-            return groupedByLowLinks;
-        }
-
-        private const int kUnvisited = -1;
-        private int[] Tarjan()
-        {
-            int id = 0;
-            int sccsCount = 0;
-
-            int[] ids = new int[VertexCount];
-            Array.Fill(ids, kUnvisited);
-
-            int[] low = new int[VertexCount];
-            int[] sccs = new int[VertexCount];
-            bool[] visited = new bool[VertexCount];
-
-            Stack<int> stack = new();
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                if (ids[i] == kUnvisited)
-                {
-                    DepthFirstSearchForConnectedComponents(i, visited, ids, id, low, stack, sccs, ref sccsCount);
-                }
-            }
-
-            return sccs;
-        }
-
-        private void DepthFirstSearchForConnectedComponents(int at, bool[] visited, int[] ids, int id, int[] low, Stack<int> stack, int[] sccs, ref int sccsCount)
-        {
-            ids[at] = low[at] = id++;
-            stack.Push(at);
-            visited[at] = true;
-
-            foreach (var edge in GetEdges(at))
-            {
-                if (ids[edge.To.Id] == kUnvisited)
-                {
-                    DepthFirstSearchForConnectedComponents(edge.To.Id, visited, ids, id, low, stack, sccs, ref sccsCount);
-                }
-
-                if (visited[edge.To.Id])
-                {
-                    low[at] = Math.Min(low[at], low[edge.To.Id]);
-                }
-            }
-
-            if (ids[at] == low[at])
-            {
-                for (int vertex = stack.Pop(); ; vertex = stack.Pop())
-                {
-                    visited[vertex] = false;
-                    sccs[vertex] = sccsCount;
-
-                    if (vertex == at)
-                        break;
-                }
-                sccsCount++;
-            }
-        }
-
-        public Vertex<T>[] FindEulerianPath()
-        {
-            (int[] inEdges, int[] outEdges) = CountInAndOutEdges(out int edgeCount);
-
-            if (!HasEulerianPath(inEdges, outEdges, edgeCount))
-                return null;
-
-            int startVertex = FindStartVertex(inEdges, outEdges);
-            List<Vertex<T>> path = new List<Vertex<T>>();
-            DepthFirstSearchForEulerianPath(startVertex, outEdges, path);
-
-            if (path.Count != edgeCount + 1)
-                return null;
-
-            path.Reverse();
-
-            return path.ToArray();
-        }
-
-        private (int[], int[]) CountInAndOutEdges(out int total)
-        {
-            int[] inEdges = new int[VertexCount];
-            int[] outEdges = new int[VertexCount];
-
-            total = 0;
-
-            for (int from = 0; from < VertexCount; from++)
-            {
-                foreach (Edge<T> edge in GetEdges(from))
-                {
-                    inEdges[edge.To.Id]++;
-                    outEdges[from]++;
-                    total++;
-                }
-            }
-
-            return (inEdges, outEdges);
-        }
-
-        private bool HasEulerianPath(int[] inEdges, int[] outEdges, int edgeCount)
-        {
-            if (edgeCount == 0)
-                return false;
-
-            int startNodes = 0;
-            int endNodes = 0;
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                if (outEdges[i] - inEdges[i] > 1 || inEdges[i] - outEdges[i] > 1)
-                {
-                    return false;
-                }
-                else if (outEdges[i] - inEdges[i] == 1)
-                {
-                    startNodes++;
-                }
-                else if (inEdges[i] - outEdges[i] == 1)
-                {
-                    endNodes++;
-                }
-            }
-
-            return (endNodes == 0 && startNodes == 0) || (endNodes == 1 && startNodes == 1);
-        }
-
-        private int FindStartVertex(int[] inEdges, int[] outEdges)
-        {
-            int start = 0;
-
-            for (int i = 0; i < VertexCount; i++)
-            {
-                if (outEdges[i] - inEdges[i] == 1)
-                    return i;
-
-                if (outEdges[i] > 0)
-                {
-                    start = i;
-                }
-            }
-
-            return start;
-        }
-
-        private void DepthFirstSearchForEulerianPath(int at, int[] outEdges, List<Vertex<T>> path)
-        {
-            while (outEdges[at] != 0)
-            {
-                int next = GetEdges(at)[--outEdges[at]].To.Id;
-                DepthFirstSearchForEulerianPath(next, outEdges, path);
-            }
-            path.Add(GetVertex(at));
         }
     }
 }
