@@ -18,21 +18,25 @@ namespace Graphs
         public IEnumerator<KeyValuePair<Vertex<T>, List<Edge<T>>>> GetEnumerator() => graph.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public void AddEdge(int from, int to, double cost)
+        public Graph<T> AddEdge(int from, int to, double cost)
         {
             Vertex<T> fromVertex = GetVertex(from);
             Vertex<T> toVertex = GetVertex(to);
 
             graph[fromVertex].Add(new Edge<T>(toVertex, cost));
+
+            return this;
         }
 
-        public void AddUndirectedEdge(int from, int to, double cost)
+        public Graph<T> AddUndirectedEdge(int from, int to, double cost)
         {
             Vertex<T> fromVertex = GetVertex(from);
             Vertex<T> toVertex = GetVertex(to);
 
             graph[fromVertex].Add(new Edge<T>(toVertex, cost));
             graph[toVertex].Add(new Edge<T>(fromVertex, cost));
+
+            return this;
         }
 
         public int AddVertex(T value)

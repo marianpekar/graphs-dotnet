@@ -21,17 +21,14 @@ namespace GraphsTests
             int d = graph.AddVertex("D");
             int e = graph.AddVertex("E");
 
-            graph.AddEdge(a, b, 1);
-            graph.AddEdge(a, c, 3);
-
-            graph.AddEdge(b, d, 2);
-            graph.AddEdge(b, e, 8);
-            graph.AddEdge(b, c, 1);
-
-            graph.AddEdge(c, d, 1);
-            graph.AddEdge(d, e, 4);
-
-            graph.AddUndirectedEdge(e, c, 3);
+            graph.AddEdge(a, b, 1)
+                .AddEdge(a, c, 3)
+                .AddEdge(b, d, 2)
+                .AddEdge(b, e, 8)
+                .AddEdge(b, c, 1)
+                .AddEdge(c, d, 1)
+                .AddEdge(d, e, 4)
+                .AddUndirectedEdge(e, c, 3);
 
             return graph;
         }
@@ -55,17 +52,13 @@ namespace GraphsTests
             int e = graph.AddVertex("E");
             int f = graph.AddVertex("F");
 
-            graph.AddEdge(a, b, 1);
-            graph.AddEdge(a, c, 1);
-
-            graph.AddEdge(b, d, 4);
-
-            graph.AddEdge(c, b, 1);
-
-            graph.AddEdge(d, c, -6);
-
-            graph.AddEdge(d, e, 1);
-            graph.AddEdge(d, f, 1);
+            graph.AddEdge(a, b, 1)
+                .AddEdge(a, c, 1)
+                .AddEdge(b, d, 4)
+                .AddEdge(c, b, 1)
+                .AddEdge(d, c, -6)
+                .AddEdge(d, e, 1)
+                .AddEdge(d, f, 1);
 
             return graph;
         }
@@ -95,21 +88,17 @@ namespace GraphsTests
             int h = graph.AddVertex("H");
             int i = graph.AddVertex("I");
 
-            graph.AddEdge(a, b, 1);
-            graph.AddEdge(b, c, 1);
-            graph.AddEdge(c, a, 1);
-
-            graph.AddUndirectedEdge(b, e, 1);
-
-            graph.AddEdge(d, e, 1);
-            graph.AddEdge(e, f, 1);
-            graph.AddEdge(f, d, 1);
-
-            graph.AddEdge(f, i, 1);
-
-            graph.AddEdge(g, h, 1);
-            graph.AddEdge(h, i, 1);
-            graph.AddEdge(i, g, 1);
+            graph.AddEdge(a, b, 1)
+                .AddEdge(b, c, 1)
+                .AddEdge(c, a, 1)
+                .AddUndirectedEdge(b, e, 1)
+                .AddEdge(d, e, 1)
+                .AddEdge(e, f, 1)
+                .AddEdge(f, d, 1)
+                .AddEdge(f, i, 1)
+                .AddEdge(g, h, 1)
+                .AddEdge(h, i, 1)
+                .AddEdge(i, g, 1);
 
             return graph;
         }
@@ -137,19 +126,19 @@ namespace GraphsTests
             int g = graph.AddVertex("G");
             int h = graph.AddVertex("H");
 
-            graph.AddEdge(a, b, 1);
-            graph.AddEdge(b, c, 1);
-            graph.AddEdge(c, a, 1);
-            graph.AddEdge(e, f, 1);
-            graph.AddEdge(d, e, 1);
-            graph.AddEdge(d, h, 1);
-            graph.AddEdge(f, a, 1);
-            graph.AddEdge(f, g, 1);
-            graph.AddEdge(g, a, 1);
-            graph.AddEdge(g, c, 1);
-            graph.AddEdge(g, e, 1);
-            graph.AddEdge(h, f, 1);
-            graph.AddEdge(h, d, 1);
+            graph.AddEdge(a, b, 1)
+                 .AddEdge(b, c, 1)
+                 .AddEdge(c, a, 1)
+                 .AddEdge(e, f, 1)
+                 .AddEdge(d, e, 1)
+                 .AddEdge(d, h, 1)
+                 .AddEdge(f, a, 1)
+                 .AddEdge(f, g, 1)
+                 .AddEdge(g, a, 1)
+                 .AddEdge(g, c, 1)
+                 .AddEdge(g, e, 1)
+                 .AddEdge(h, f, 1)
+                 .AddEdge(h, d, 1);
 
             return graph;
         }
@@ -171,12 +160,12 @@ namespace GraphsTests
             int d = graph.AddVertex("D");
             int e = graph.AddVertex("E");
 
-            graph.AddEdge(a, b, 1);
-            graph.AddEdge(b, c, 1);
-            graph.AddEdge(b, e, 1);
-            graph.AddEdge(b, d, 1);
-            graph.AddEdge(c, b, 1);
-            graph.AddEdge(e, b, 1);
+            graph.AddEdge(a, b, 1)
+                .AddEdge(b, c, 1)
+                .AddEdge(b, e, 1)
+                .AddEdge(b, d, 1)
+                .AddEdge(c, b, 1)
+                .AddEdge(e, b, 1);
 
             return graph;
         }
@@ -198,11 +187,11 @@ namespace GraphsTests
             int d = graph.AddVertex("D");
             int e = graph.AddVertex("E");
 
-            graph.AddEdge(a, b, 1);
-            graph.AddEdge(b, e, 1);
-            graph.AddEdge(b, d, 1);
-            graph.AddEdge(c, b, 1);
-            graph.AddEdge(e, b, 1);
+            graph.AddEdge(a, b, 1)
+                .AddEdge(b, e, 1)
+                .AddEdge(b, d, 1)
+                .AddEdge(c, b, 1)
+                .AddEdge(e, b, 1);
 
             return graph;
         }
